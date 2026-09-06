@@ -46,7 +46,7 @@ This project is a web-based platform that:
 
 | Document | Status | Location |
 |---|---|---|
-| Software Requirements Specification (v1.0) | ✅ Complete | [`docs/SRS_ProjectID35_FSDIRAS.docx`](docs/SRS_ProjectID35_FSDIRAS.docx) |
+| Software Requirements Specification (v1.0) | ✅ Complete | [`SRS_ProjectID35_FSDIRAS.pdf`](SRS_ProjectID35_FSDIRAS.pdf) (preview) · [`.docx`](SRS_ProjectID35_FSDIRAS.docx) (editable) |
 | Project Plan | 🔲 Pending | `docs/` |
 | Test Plan | 🔲 Pending | `docs/` |
 | Design Diagrams | 🔲 Pending | `docs/` |
@@ -64,7 +64,7 @@ This project is a web-based platform that:
    and admin controls for users, content, and blacklists.
 
 Full functional and non-functional requirements are detailed in the
-[SRS](docs/SRS_ProjectID35_FSDIRAS.docx).
+[SRS](SRS_ProjectID35_FSDIRAS.pdf).
 
 ## Getting Started
 
