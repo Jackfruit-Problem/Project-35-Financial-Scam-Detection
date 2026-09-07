@@ -36,11 +36,18 @@ This project is a web-based platform that:
 
 ```
 .
-├── docs/           # Project documentation (SRS, project plan, test plan, design docs)
-├── src/            # Application source code
-├── tests/          # Test cases and test artifacts
+├── backend/        # FastAPI application, tests and demo seed script
+│   ├── app/        #   models, schemas, API routers, services
+│   ├── tests/      #   test suite (one module per SRS feature area)
+│   └── scripts/    #   seed_demo.py
+├── ml/             # Risk-scoring model service (planned)
+├── frontend/       # React application (planned)
+├── docs/           # Project plan, test plan, design diagrams
+├── RUNNING.md      # How to install, seed, run and test the system
 └── README.md
 ```
+
+See **[RUNNING.md](RUNNING.md)** for setup and run instructions.
 
 ## Documentation
 
