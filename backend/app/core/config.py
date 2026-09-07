@@ -23,6 +23,9 @@ class Settings(BaseSettings):
 
     ML_SERVICE_URL: str = "http://localhost:8001"
 
+    # Local encrypted evidence store; swapped for S3 or equivalent on deploy.
+    EVIDENCE_DIR: str = "./evidence_store"
+
 
 @lru_cache
 def get_settings() -> Settings:

@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.models.enums import (
     CaseStatus,
+    CustodyAction,
     RecoveryStatus,
     RiskBand,
     Role,
@@ -126,6 +127,47 @@ class CaseNoteOut(ORMModel):
     author_id: int
     body: str
     created_at: datetime
+
+
+# --- evidence and custody ---------------------------------------------------
+
+
+class EvidenceOut(ORMModel):
+    id: int
+    case_id: int
+    uploaded_by_id: int
+    filename: str
+    content_type: str
+    size_bytes: int
+    sha256: str
+    is_archived: bool
+    archive_reason: str | None
+    created_at: datetime
+
+
+class CustodyEventOut(ORMModel):
+    id: int
+    evidence_id: int
+    actor_id: int
+    action: CustodyAction
+    detail: str | None
+    prev_hash: str | None
+    entry_hash: str
+    created_at: datetime
+
+
+class ChainVerification(BaseModel):
+    """Two independent checks: was the log rewritten, and was the file swapped."""
+
+    evidence_id: int
+    chain_intact: bool
+    file_intact: bool
+    broken_at_event_id: int | None
+
+
+class EvidenceArchive(BaseModel):
+    # REQ-13: a reason is mandatory, so archiving can never be silent.
+    reason: str = Field(min_length=3, max_length=500)
 
 
 # --- recovery ---------------------------------------------------------------
