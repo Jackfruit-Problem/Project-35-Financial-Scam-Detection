@@ -8,7 +8,14 @@ from app.db.session import get_db
 from app.models.enums import CaseStatus, Role
 from app.models.report import Case, CaseNote
 from app.models.user import User
-from app.schemas import CaseNoteCreate, CaseNoteOut, CaseOut, CaseStatusUpdate
+from app.schemas import (
+    CaseDetail,
+    CaseNoteCreate,
+    CaseNoteOut,
+    CaseOut,
+    CaseStatusUpdate,
+    ReportOut,
+)
 from app.services import audit
 
 router = APIRouter(prefix="/cases", tags=["cases"])
@@ -48,13 +55,23 @@ def list_cases(
     return list(db.scalars(query).all())
 
 
-@router.get("/{case_ref}", response_model=CaseOut)
+@router.get("/{case_ref}", response_model=CaseDetail)
 def get_case(
     case_ref: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)
-) -> Case:
+) -> CaseDetail:
     case = _load_case(db, case_ref)
     _assert_can_view(case, user)
-    return case
+
+    investigator = (
+        db.get(User, case.assigned_investigator_id)
+        if case.assigned_investigator_id
+        else None
+    )
+    return CaseDetail(
+        case=CaseOut.model_validate(case),
+        report=ReportOut.model_validate(case.report),
+        investigator_name=investigator.full_name if investigator else None,
+    )
 
 
 @router.post(

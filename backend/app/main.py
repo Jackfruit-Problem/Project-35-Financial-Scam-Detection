@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # Importing the model package registers every table on Base.metadata.
 from app import models  # noqa: F401
-from app.api.v1 import auth, cases, evidence, recovery, reports
+from app.api.v1 import admin, auth, cases, education, evidence, recovery, reports
 from app.core.config import settings
 from app.db.base import Base
 from app.db.session import engine
@@ -44,6 +44,8 @@ app.include_router(reports.router, prefix=settings.API_V1_PREFIX)
 app.include_router(cases.router, prefix=settings.API_V1_PREFIX)
 app.include_router(evidence.router, prefix=settings.API_V1_PREFIX)
 app.include_router(recovery.router, prefix=settings.API_V1_PREFIX)
+app.include_router(education.router, prefix=settings.API_V1_PREFIX)
+app.include_router(admin.router, prefix=settings.API_V1_PREFIX)
 
 
 @app.get("/health", tags=["meta"])

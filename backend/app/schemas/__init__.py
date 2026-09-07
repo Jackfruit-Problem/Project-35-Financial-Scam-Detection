@@ -5,6 +5,7 @@ from datetime import date, datetime
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.models.enums import (
+    BlacklistType,
     CaseStatus,
     CustodyAction,
     RecoveryStatus,
@@ -197,3 +198,127 @@ class RecoveryOut(ORMModel):
     remarks: str | None
     created_at: datetime
     updated_at: datetime
+
+
+# --- education --------------------------------------------------------------
+
+
+class ArticleCreate(BaseModel):
+    title: str = Field(max_length=200)
+    category: ScamCategory
+    body: str = Field(min_length=1)
+
+
+class ArticleUpdate(BaseModel):
+    title: str | None = Field(default=None, max_length=200)
+    category: ScamCategory | None = None
+    body: str | None = None
+    is_published: bool | None = None
+
+
+class ArticleOut(ORMModel):
+    id: int
+    title: str
+    category: ScamCategory
+    body: str
+    is_published: bool
+    created_at: datetime
+
+
+class QuizOut(ORMModel):
+    id: int
+    title: str
+    category: ScamCategory
+
+
+class QuizQuestionOut(BaseModel):
+    """Deliberately has no correct_index -- see the get_quiz docstring."""
+
+    id: int
+    prompt: str
+    options: list[str]
+
+
+class QuizDetail(BaseModel):
+    id: int
+    title: str
+    category: ScamCategory
+    questions: list[QuizQuestionOut]
+
+
+class QuizAnswer(BaseModel):
+    question_id: int
+    selected_index: int = Field(ge=0)
+
+
+class QuizSubmission(BaseModel):
+    answers: list[QuizAnswer]
+
+
+class QuizFeedback(BaseModel):
+    question_id: int
+    prompt: str
+    selected_index: int | None
+    correct_index: int
+    is_correct: bool
+    explanation: str | None
+
+
+class QuizAttemptResult(BaseModel):
+    quiz_id: int
+    score: int
+    total: int
+    feedback: list[QuizFeedback]
+
+
+# --- administration ---------------------------------------------------------
+
+
+class RoleUpdate(BaseModel):
+    role: Role
+
+
+class BlacklistCreate(BaseModel):
+    entry_type: BlacklistType
+    value: str = Field(min_length=1, max_length=255)
+    note: str | None = Field(default=None, max_length=500)
+
+
+class BlacklistOut(ORMModel):
+    id: int
+    entry_type: BlacklistType
+    value: str
+    note: str | None
+    created_at: datetime
+
+
+class CategoryCount(BaseModel):
+    category: ScamCategory
+    count: int
+
+
+class AnalyticsOut(BaseModel):
+    """REQ-24: what the administrator dashboard shows."""
+
+    total_reports: int
+    total_cases: int
+    resolved_cases: int
+    resolution_rate: float
+    total_amount_reported: float
+    total_amount_recovered: float
+    recovery_rate: float
+    fully_recovered_cases: int
+    trending_categories: list[CategoryCount]
+
+
+class CaseDetail(BaseModel):
+    """A case together with the report behind it.
+
+    The list view returns cases alone, but every detail screen immediately
+    needs the report too -- returning them together avoids a second round
+    trip for data that is never wanted separately.
+    """
+
+    case: CaseOut
+    report: ReportOut
+    investigator_name: str | None = None
