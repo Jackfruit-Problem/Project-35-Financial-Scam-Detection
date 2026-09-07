@@ -32,3 +32,9 @@ venv/
 # Misc
 .cache/
 coverage/
+
+# Local database fallback (SQLite, used before Docker/Postgres is available)
+*.db
+
+# Uploaded evidence files (never committed)
+evidence_store/
