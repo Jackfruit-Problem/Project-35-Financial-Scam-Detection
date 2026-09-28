@@ -43,6 +43,9 @@ This project is a web-based platform that:
 ├── ml/             # Risk-scoring model service (planned)
 ├── frontend/       # React application (planned)
 ├── docs/           # Project plan, test plan, design diagrams
+├── tools/          # Helper scripts used by the launchers
+├── Run FSDIRAS.bat # Double-click to start the whole system
+├── Stop FSDIRAS.bat
 ├── RUNNING.md      # How to install, seed, run and test the system
 └── README.md
 ```
@@ -75,7 +78,15 @@ Full functional and non-functional requirements are detailed in the
 
 ## Getting Started
 
-_Setup instructions will be added here once implementation begins._
+**Double-click `Run FSDIRAS.bat`.** It installs what it needs on the
+first run, starts the system, and opens the app in your browser at
+<http://localhost:5173>. `Stop FSDIRAS.bat` shuts it down.
+
+Sign in with any demo account, for example `investigator@fsdiras.example.com`
+with the password `password123`.
+
+See **[RUNNING.md](RUNNING.md)** for the full setup, the other demo accounts,
+and how to run the tests.
 
 ## License
 

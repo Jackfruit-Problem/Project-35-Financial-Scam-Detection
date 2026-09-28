@@ -1,5 +1,29 @@
 # Running FSDIRAS
 
+## The easy way: double-click
+
+In this folder there are two files:
+
+| File | What it does |
+|---|---|
+| **Run FSDIRAS.bat** | Starts everything and opens the app in your browser |
+| **Stop FSDIRAS.bat** | Shuts it all down again |
+
+Double-click **Run FSDIRAS.bat**. The first run installs what it needs and
+takes a few minutes; every run after that takes about ten seconds. When it is
+ready your browser opens at <http://localhost:5173>.
+
+It leaves two black console windows open. Those are the servers -- minimise
+them, do not close them, or the app stops. When you are finished, double-click
+**Stop FSDIRAS.bat**.
+
+Sign in with any of the demo accounts listed below. Everything after this
+point is for working on the code; you do not need it just to use the app.
+
+---
+
+# Working on the code
+
 Everything below assumes you are in the repository root.
 
 ## What you need installed
