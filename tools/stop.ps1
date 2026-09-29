@@ -44,7 +44,7 @@ Start-Sleep -Milliseconds 800
 
 # Pass 2: a belt-and-braces sweep of the ports, for anything that survived.
 # Second, never first: with the supervisor already gone, nothing respawns.
-foreach ($port in 8000, 5173) {
+foreach ($port in 8000, 8001, 5173) {
     $owners = Get-NetTCPConnection -LocalPort $port -State Listen |
         Select-Object -ExpandProperty OwningProcess -Unique
     foreach ($owner in $owners) {
@@ -62,7 +62,7 @@ if ($killed -eq 0) {
 # what made the earlier version wrong.
 Start-Sleep -Milliseconds 500
 $busy = @()
-foreach ($port in 8000, 5173) {
+foreach ($port in 8000, 8001, 5173) {
     if (Get-NetTCPConnection -LocalPort $port -State Listen) { $busy += $port }
 }
 

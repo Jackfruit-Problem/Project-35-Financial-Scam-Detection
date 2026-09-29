@@ -21,7 +21,7 @@ from app.schemas import (
     RoleUpdate,
     UserOut,
 )
-from app.services import audit
+from app.services import audit, ml_client
 
 router = APIRouter(
     prefix="/admin",
@@ -205,3 +205,25 @@ def analytics(db: Session = Depends(get_db)) -> AnalyticsOut:
         fully_recovered_cases=fully_recovered,
         trending_categories=trending,
     )
+
+
+@router.get("/model")
+def detection_model() -> dict:
+    """REQ-7: what model is in service and how well it actually scored.
+
+    Served straight from the model service so the administration screen shows
+    measured numbers from the artefact in use, not figures copied into the
+    interface by hand that can drift away from reality.
+    """
+    metrics = ml_client.info()
+    if metrics is None:
+        # Not an error: the SRS makes the model an independently deployable
+        # service, so "not running" is a normal state the screen must show.
+        return {
+            "available": False,
+            "detail": (
+                "The detection model service is not reachable. Risk scoring is "
+                "falling back to the built-in rules."
+            ),
+        }
+    return {"available": True, **metrics}

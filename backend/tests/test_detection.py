@@ -45,7 +45,10 @@ def test_analyse_logs_every_request(db_session):
 
     logs = db_session.query(DetectionLog).all()
     assert len(logs) == 1
-    assert logs[0].model_version == detection.MODEL_VERSION
+    # Which scorer produced the result is part of the log, so the fallback
+    # annotates itself rather than passing as the model. See
+    # test_ml_integration.py for the model-present case.
+    assert logs[0].model_version.startswith(detection.MODEL_VERSION)
 
 
 def test_blacklist_short_circuits_the_model(db_session):

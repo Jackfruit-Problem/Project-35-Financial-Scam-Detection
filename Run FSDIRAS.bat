@@ -20,7 +20,7 @@ if exist "%VENV_PY%" goto :haveenv
 :: Detection is done step by step rather than in one chained expression,
 :: because cmd's parser handles && inside if-blocks badly enough to silently
 :: pick the wrong interpreter.
-echo   [1/5] Setting up Python ^(one time only^)...
+echo   [1/6] Setting up Python ^(one time only^)...
 set "BOOTSTRAP="
 
 py -3.11 --version >nul 2>&1
@@ -48,14 +48,14 @@ if errorlevel 1 goto :pipfailed
 goto :frontend
 
 :haveenv
-echo   [1/5] Python environment found.
-echo   [2/5] Backend packages already installed.
+echo   [1/6] Python environment found.
+echo   [2/6] Backend and model packages already installed.
 
 :: -------------------------------------------------------------- Frontend ---
 :frontend
 if exist "frontend\node_modules" goto :havenode
 
-echo   [3/5] Installing web interface packages ^(one time only^)...
+echo   [3/6] Installing web interface packages ^(one time only^)...
 where npm >nul 2>&1
 if errorlevel 1 goto :nonode
 pushd frontend
@@ -64,24 +64,39 @@ popd
 goto :data
 
 :havenode
-echo   [3/5] Web interface packages already installed.
+echo   [3/6] Web interface packages already installed.
 
 :: ------------------------------------------------------------------ Data ---
 :data
 if exist "backend\fsdiras.db" goto :havedata
-echo   [4/5] Creating the demo database...
+echo   [4/6] Creating the demo database...
 pushd backend
 ".venv\Scripts\python.exe" scripts\seed_demo.py >nul
 popd
-goto :servers
+goto :model
 
 :havedata
-echo   [4/5] Database found.
+echo   [4/6] Database found.
+
+:: ------------------------------------------------------------------ Model ---
+:model
+if exist "ml\artifacts\model.joblib" goto :havemodel
+echo   [5/6] Training the detection model. This happens once and takes
+echo         a couple of minutes, including downloading the public dataset...
+pushd ml
+"..\backend\.venv\Scripts\python.exe" build_dataset.py
+"..\backend\.venv\Scripts\python.exe" train.py
+popd
+goto :servers
+
+:havemodel
+echo   [5/6] Detection model found.
 
 :: --------------------------------------------------------------- Servers ---
 :servers
-echo   [5/5] Starting the system...
+echo   [6/6] Starting the system...
 
+start "FSDIRAS Model (do not close)" cmd /k "cd /d "%~dp0ml" && ..\backend\.venv\Scripts\python.exe -m uvicorn app.main:app --port 8001"
 start "FSDIRAS API (do not close)" cmd /k "cd /d "%~dp0backend" && .venv\Scripts\python.exe -m uvicorn app.main:app --reload"
 start "FSDIRAS Web (do not close)" cmd /k "cd /d "%~dp0frontend" && npm run dev"
 
@@ -101,14 +116,22 @@ goto :timedout
 
 :ready
 ping -n 4 127.0.0.1 >nul
+curl -s -o nul -m 3 http://127.0.0.1:8001/health 2>nul
+if errorlevel 1 (
+    echo   Note: the detection model is not answering yet. Risk scoring will
+    echo   use the built-in rules until it is up. Nothing else is affected.
+) else (
+    echo   Detection model is up.
+)
 start "" http://localhost:5173
 
 echo.
 echo   ============================================
 echo     Running. Your browser should have opened.
 echo.
-echo     Web app   http://localhost:5173
-echo     API docs  http://localhost:8000/docs
+echo     Web app     http://localhost:5173
+echo     API docs    http://localhost:8000/docs
+echo     Model docs  http://localhost:8001/docs
 echo.
 echo     Sign in with any demo account:
 echo       victim@fsdiras.example.com
@@ -118,7 +141,7 @@ echo       admin@fsdiras.example.com
 echo     Password for all:  password123
 echo.
 echo     To shut down, run "Stop FSDIRAS.bat" or
-echo     close the two windows this opened.
+echo     close the three windows this opened.
 echo   ============================================
 echo.
 echo   You can close THIS window now.
@@ -162,9 +185,9 @@ exit /b 1
 
 :timedout
 echo.
-echo   The system did not start within a minute. Look at the two windows
-echo   titled "FSDIRAS API" and "FSDIRAS Web" - the error will be in one
-echo   of them.
+echo   The system did not start within a minute. Look at the windows titled
+echo   "FSDIRAS API", "FSDIRAS Web" and "FSDIRAS Model" - the error will be
+echo   in one of them.
 echo.
 pause
 exit /b 1

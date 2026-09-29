@@ -40,8 +40,8 @@ This project is a web-based platform that:
 │   ├── app/        #   models, schemas, API routers, services
 │   ├── tests/      #   test suite (one module per SRS feature area)
 │   └── scripts/    #   seed_demo.py
-├── ml/             # Risk-scoring model service (planned)
-├── frontend/       # React application (planned)
+├── ml/             # Risk-scoring model service, training and evaluation
+├── frontend/       # React application
 ├── docs/           # Project plan, test plan, design diagrams
 ├── tools/          # Helper scripts used by the launchers
 ├── Run FSDIRAS.bat # Double-click to start the whole system
@@ -65,7 +65,9 @@ See **[RUNNING.md](RUNNING.md)** for setup and run instructions.
 
 1. **Scam Detection Engine (AI/ML)** — analyzes text, URLs, and transaction
    metadata to produce a risk score, cross-checked against a maintained
-   blacklist.
+   blacklist. A TF-IDF and logistic-regression classifier trained on the UCI
+   SMS Spam Collection plus synthetic Indian financial-fraud data, served as
+   its own REST service, with the built-in rules as a documented fallback.
 2. **Investigation & Evidence Management** — case lifecycle management with an
    immutable, timestamped chain of custody for evidence.
 3. **Recovery & Reporting Assistance** — recovery-status tracking and

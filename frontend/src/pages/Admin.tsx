@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { api, type Analytics, type Role, type User } from "../api";
+import ModelTab from "./ModelTab";
 import { Alert, Empty, Stat, humanise, rupees } from "../ui";
 
 interface BlacklistEntry {
@@ -13,7 +14,9 @@ interface BlacklistEntry {
 const ROLES: Role[] = ["victim", "investigator", "recovery_officer", "admin"];
 
 export default function Admin() {
-  const [tab, setTab] = useState<"analytics" | "users" | "blacklist">("analytics");
+  const [tab, setTab] = useState<"analytics" | "model" | "users" | "blacklist">(
+    "analytics",
+  );
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -21,11 +24,13 @@ export default function Admin() {
     <>
       <div className="page-head">
         <h1>Administration</h1>
-        <p>System analytics, user roles, and the detection blacklist.</p>
+        <p>
+          System analytics, the detection model, user roles, and the blacklist.
+        </p>
       </div>
 
       <div className="actions" style={{ marginBottom: 16 }}>
-        {(["analytics", "users", "blacklist"] as const).map((value) => (
+        {(["analytics", "model", "users", "blacklist"] as const).map((value) => (
           <button
             key={value}
             className={tab === value ? "" : "secondary"}
@@ -44,6 +49,7 @@ export default function Admin() {
       <Alert kind="success">{message}</Alert>
 
       {tab === "analytics" && <AnalyticsTab onError={setError} />}
+      {tab === "model" && <ModelTab onError={setError} />}
       {tab === "users" && <UsersTab onError={setError} onMessage={setMessage} />}
       {tab === "blacklist" && <BlacklistTab onError={setError} onMessage={setMessage} />}
     </>

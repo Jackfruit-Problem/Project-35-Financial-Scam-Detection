@@ -50,3 +50,32 @@ jobs:
         env:
           DATABASE_URL: postgresql+psycopg://fsdiras:fsdiras@localhost:5432/fsdiras_test
         run: pytest --cov=app --cov-report=term-missing
+
+  model:
+    name: Detection model (lint + tests)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ml
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: ml/requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt ruff==0.8.4
+
+      - name: Lint
+        run: ruff check .
+
+      # The committed model is tested as it stands. Retraining here would test
+      # a different artefact from the one the application actually serves, and
+      # the quality gate exists precisely to catch a bad committed model.
+      - name: Run tests
+        run: pytest

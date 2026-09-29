@@ -21,7 +21,10 @@ class Settings(BaseSettings):
     RISK_MEDIUM_THRESHOLD: int = 40
     RISK_HIGH_THRESHOLD: int = 70
 
-    ML_SERVICE_URL: str = "http://localhost:8001"
+    ML_SERVICE_URL: str = "http://127.0.0.1:8001"
+    # Well inside the 5-second budget in REQ-2, so a slow model cannot make the
+    # application miss its own performance requirement.
+    ML_TIMEOUT_SECONDS: float = 2.5
 
     # Local encrypted evidence store; swapped for S3 or equivalent on deploy.
     EVIDENCE_DIR: str = "./evidence_store"

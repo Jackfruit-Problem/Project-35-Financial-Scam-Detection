@@ -38,3 +38,11 @@ coverage/
 
 # Uploaded evidence files (never committed)
 evidence_store/
+
+# Downloaded public dataset -- fetched by ml/build_dataset.py, not ours to ship
+ml/data/raw/
+
+# Combined training file -- derived from synthetic_in.csv plus the download,
+# so it is rebuilt rather than committed. The synthetic half IS committed,
+# because it is ours and the model cannot be reproduced without it.
+ml/data/train.csv

@@ -13,9 +13,14 @@ Double-click **Run FSDIRAS.bat**. The first run installs what it needs and
 takes a few minutes; every run after that takes about ten seconds. When it is
 ready your browser opens at <http://localhost:5173>.
 
-It leaves two black console windows open. Those are the servers -- minimise
-them, do not close them, or the app stops. When you are finished, double-click
+It leaves three black console windows open -- the web interface, the
+application, and the detection model. Those are the servers: minimise them, do
+not close them, or the app stops. When you are finished, double-click
 **Stop FSDIRAS.bat**.
+
+On a fresh copy of the repository the very first run also trains the detection
+model, which adds a couple of minutes and downloads a public dataset. It only
+happens once.
 
 Sign in with any of the demo accounts listed below. Everything after this
 point is for working on the code; you do not need it just to use the app.
@@ -95,6 +100,28 @@ Every request you make from the page now runs as that user. Log in as a
 different role to see how the system's answers change -- that is the clearest
 way to see role-based access control working.
 
+## The detection model
+
+The model lives in `ml/` and runs as its own service on port 8001, which is
+what the SRS asks for: it can be retrained or replaced without touching the
+application.
+
+```
+cd ml
+..ackend\.venv\Scripts\python.exe build_dataset.py   # assemble the data
+..ackend\.venv\Scripts\python.exe train.py           # train and evaluate
+..ackend\.venv\Scripts\python.exe -m pytest          # quality gate
+```
+
+`train.py` prints its scores and writes `ml/artifacts/metrics.json`. Those same
+numbers appear in the application under **Admin -> Model**, read live from the
+service, so the screen can never advertise figures from an older model.
+
+If the model service is not running, risk scoring falls back to the built-in
+rules and everything else works normally. That is deliberate: SRS 2.6 requires
+a model outage to degrade the score rather than stop people filing reports. The
+Admin -> Model tab says plainly when it is down.
+
 ## Run the tests
 
 ```
@@ -163,8 +190,8 @@ Re-run the seed script to restore everything.
 with the "Add Python to PATH" box ticked, or use the full path to
 `python.exe`.
 
-**Port 8000 already in use** -- another copy of the server is still running.
-Close that terminal, or start on a different port with `--port 8001`.
+**Port 8000, 8001 or 5173 already in use** -- another copy is still running.
+Run `Stop FSDIRAS.bat`, which reports whether the ports actually came free.
 
 **Login returns 422 about the email** -- the address uses a reserved domain
 such as `.local` or `.test`. Use a normal domain; the demo accounts use

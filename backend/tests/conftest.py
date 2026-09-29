@@ -16,6 +16,55 @@ from app.db.session import get_db
 from app.main import app
 from app.models.enums import Role
 from app.models.user import User
+from app.services import ml_client
+
+# Captured before anything patches it, so tests of the client itself can put
+# the real implementation back. Without this, the autouse fixture below
+# replaces the function under test and "returns None" passes vacuously.
+_REAL_ML_PREDICT = ml_client.predict
+
+
+@pytest.fixture
+def real_ml_client(monkeypatch):
+    """Restore the genuine client, for tests that exercise its own defences."""
+    monkeypatch.setattr(ml_client, "predict", _REAL_ML_PREDICT)
+    return ml_client
+
+
+@pytest.fixture(autouse=True)
+def no_model_service(monkeypatch):
+    """Force every test onto the rule-based fallback by default.
+
+    Without this the suite would score differently depending on whether the
+    model service happened to be running on this machine at the time -- passing
+    locally and failing in CI, or worse, the reverse. Tests that want the model
+    path use the fake_model fixture to opt in explicitly.
+    """
+    monkeypatch.setattr(ml_client, "predict", lambda text: None)
+
+
+@pytest.fixture
+def fake_model(monkeypatch):
+    """Stand in for the model service with a fixed answer.
+
+    A fake rather than the real service: these tests are about how the
+    application behaves given a model response, not about how good the model
+    is. Model quality is measured in ml/tests.
+    """
+
+    def _install(risk_score: int, reasons: list[str] | None = None,
+                 version: str = "tfidf-logreg-v1"):
+        def fake_predict(text: str):
+            return {
+                "risk_score": risk_score,
+                "reasons": reasons if reasons is not None else ["the wording \"test\""],
+                "model_version": version,
+                "probability": risk_score / 100,
+            }
+
+        monkeypatch.setattr(ml_client, "predict", fake_predict)
+
+    return _install
 
 
 @pytest.fixture

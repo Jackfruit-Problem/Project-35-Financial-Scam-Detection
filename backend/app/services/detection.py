@@ -4,10 +4,11 @@ Two-stage by design, matching SRS 5.1.2: the blacklist is consulted *before*
 the model, because a known-fraudulent UPI ID is a fact and a model score is an
 opinion. A blacklist hit short-circuits to 100 and never calls the model.
 
-The scorer behind score_text() is deliberately swappable. Today it is a
-transparent rule set (model_version "rules-v0") so the whole pipeline works
-end to end with no trained artefact; the ML service replaces it by
-implementing the same call and bumping model_version. Nothing else changes.
+Scoring is served by the trained model in the ml/ service when it is
+reachable, and by the transparent rule set here when it is not. The rules
+remain the documented fallback rather than dead code: they are what keeps
+report submission working during a model outage (SRS 2.6), and they are the
+baseline the model's measured numbers should be compared against.
 """
 import re
 import time
@@ -18,6 +19,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.models.detection import BlacklistEntry, DetectionLog
 from app.models.enums import RiskBand
+from app.services import ml_client
 
 MODEL_VERSION = "rules-v0"
 
@@ -95,15 +97,46 @@ def score_text(text: str) -> tuple[int, list[str]]:
 def analyse(
     db: Session, text: str, *, requested_by_id: int | None = None
 ) -> dict:
-    """Full pipeline: blacklist, then model, then log. REQ-6 logs every request."""
+    """Full pipeline: blacklist, then model, then log. REQ-6 logs every request.
+
+    Three tiers, in descending order of authority:
+
+    1. The blacklist. A recorded fraudulent identifier is a fact and scores
+       100 without consulting anything else.
+    2. The trained model, if its service is reachable.
+    3. The built-in rules, if it is not. The rules are not decoration -- they
+       are what keeps the system usable when the model is down, and they are
+       what the model was measured against.
+
+    Which tier produced a score is recorded in model_version on every request,
+    so a run of unexpectedly low scores can be traced to the model service
+    having been unavailable rather than to a change in the fraud.
+    """
     started = time.perf_counter()
 
     hit = check_blacklist(db, text)
     if hit:
-        score, reasons, matched = 100, [f"matches blacklisted {hit.entry_type}"], True
+        score = 100
+        reasons = [f"matches blacklisted {hit.entry_type}"]
+        matched = True
+        model_version = MODEL_VERSION
     else:
-        score, reasons = score_text(text)
         matched = False
+        prediction = ml_client.predict(text)
+
+        if prediction is not None:
+            score = prediction["risk_score"]
+            model_version = prediction["model_version"]
+            # The model names the wording that moved the score; the rules name
+            # recognisable tactics. Both are true and they read well together,
+            # so the rule reasons are kept alongside the model's.
+            _, rule_reasons = score_text(text)
+            reasons = prediction["reasons"] + [
+                r for r in rule_reasons if r not in prediction["reasons"]
+            ]
+        else:
+            score, reasons = score_text(text)
+            model_version = f"{MODEL_VERSION} (model service unavailable)"
 
     band = band_for(score)
     latency_ms = int((time.perf_counter() - started) * 1000)
@@ -115,7 +148,7 @@ def analyse(
             risk_score=score,
             risk_band=band,
             matched_blacklist=matched,
-            model_version=MODEL_VERSION,
+            model_version=model_version[:40],
             latency_ms=latency_ms,
         )
     )
@@ -125,7 +158,7 @@ def analyse(
         "risk_band": band,
         "reasons": reasons or ["no known scam indicators detected"],
         "matched_blacklist": matched,
-        "model_version": MODEL_VERSION,
+        "model_version": model_version,
         "latency_ms": latency_ms,
         # SRS 6.2 and 6.5: the score never stands alone as a determination.
         "advisory_note": (

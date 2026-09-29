@@ -15,16 +15,30 @@ services:
       timeout: 5s
       retries: 10
 
+  # The model is its own service so it can be retrained, replaced or scaled
+  # independently of the application (SRS 2.5, 6.4).
+  ml:
+    build: ./ml
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./ml:/app
+
   api:
     build: ./backend
     environment:
       DATABASE_URL: postgresql+psycopg://fsdiras:fsdiras@db:5432/fsdiras
       SECRET_KEY: ${SECRET_KEY:-dev-only-change-in-production}
+      ML_SERVICE_URL: http://ml:8001
     ports:
       - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
+      # Not a health condition: scoring falls back to the built-in rules if the
+      # model is unavailable, so the API must start either way.
+      ml:
+        condition: service_started
     volumes:
       - ./backend:/app
 

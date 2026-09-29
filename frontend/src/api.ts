@@ -199,3 +199,38 @@ export interface Analytics {
   fully_recovered_cases: number;
   trending_categories: { category: string; count: number }[];
 }
+
+export interface ModelSourceMetrics {
+  precision: number;
+  recall: number;
+  f1: number;
+  roc_auc: number | null;
+  confusion_matrix: {
+    true_negative: number;
+    false_positive: number;
+    false_negative: number;
+    true_positive: number;
+  };
+  support: { scam: number; legitimate: number };
+}
+
+export interface ModelInfo {
+  available: boolean;
+  detail?: string;
+  model_version?: string;
+  trained_at?: string;
+  algorithm?: string;
+  why_this_model?: string;
+  decision_threshold?: number;
+  threshold_rationale?: string;
+  overall?: ModelSourceMetrics;
+  per_source?: Record<string, ModelSourceMetrics>;
+  cross_validation?: { folds: number; metric: string; mean: number; std: number };
+  dataset?: {
+    total_messages: number;
+    scam: number;
+    legitimate: number;
+    sources: Record<string, string>;
+  };
+  honest_limitations?: string[];
+}
