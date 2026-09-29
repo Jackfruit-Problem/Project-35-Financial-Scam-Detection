@@ -14,12 +14,28 @@ from app.services import audit
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
+def normalise_email(email: str) -> str:
+    """One canonical form for an address, used on the way in and on lookup.
+
+    Email domains are case-insensitive by specification, and no mail provider
+    in practice treats the local part as case-sensitive either. Comparing them
+    literally means a capitalised first letter -- which phone keyboards and
+    Windows autocomplete add without being asked -- reads as a wrong password.
+    """
+    return email.strip().lower()
+
+
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register(payload: UserCreate, db: Session = Depends(get_db)) -> User:
     """Public registration always creates a Victim. Elevated roles are granted
     by an administrator (REQ-23), never self-selected -- otherwise anyone could
     sign up as an investigator and read every case."""
-    existing = db.scalars(select(User).where(User.email == payload.email)).first()
+    # Addresses are stored lower-cased. Nobody thinks of Asha@ and asha@ as two
+    # accounts, and phone keyboards capitalise the first letter by default, so
+    # storing them as typed produces accounts their owners cannot sign in to.
+    email = normalise_email(payload.email)
+
+    existing = db.scalars(select(User).where(User.email == email)).first()
     if existing:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Email already registered"
@@ -27,7 +43,7 @@ def register(payload: UserCreate, db: Session = Depends(get_db)) -> User:
 
     user = User(
         full_name=payload.full_name,
-        email=payload.email,
+        email=email,
         phone=payload.phone,
         hashed_password=hash_password(payload.password),
         role=Role.VICTIM,
@@ -42,7 +58,9 @@ def register(payload: UserCreate, db: Session = Depends(get_db)) -> User:
 
 @router.post("/login", response_model=Token)
 def login(payload: LoginRequest, db: Session = Depends(get_db)) -> Token:
-    user = db.scalars(select(User).where(User.email == payload.email)).first()
+    user = db.scalars(
+        select(User).where(User.email == normalise_email(payload.email))
+    ).first()
 
     # Same message and code for "no such user" and "wrong password" so the
     # endpoint cannot be used to enumerate which emails are registered.

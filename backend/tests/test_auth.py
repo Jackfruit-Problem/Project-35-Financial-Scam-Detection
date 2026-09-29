@@ -86,3 +86,49 @@ def test_deactivated_account_loses_access_immediately(
     db_session.commit()
 
     assert client.get("/api/v1/auth/me", headers=headers).status_code == 403
+
+
+# --- address handling -------------------------------------------------------
+#
+# A capitalised first letter is not a typo the user made; it is what phone
+# keyboards and Windows autocomplete produce unasked. Treating it as a wrong
+# password locks people out of accounts they created correctly.
+
+
+def test_login_ignores_capitalisation(client):
+    client.post("/api/v1/auth/register", json=REGISTRATION)
+
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"email": "Asha@Example.COM", "password": REGISTRATION["password"]},
+    )
+    assert response.status_code == 200
+
+
+def test_login_ignores_surrounding_whitespace(client):
+    """Copying an address out of a document brings a trailing space with it."""
+    client.post("/api/v1/auth/register", json=REGISTRATION)
+
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"email": "  asha@example.com  ", "password": REGISTRATION["password"]},
+    )
+    assert response.status_code == 200
+
+
+def test_registration_stores_the_address_lower_cased(client):
+    body = client.post(
+        "/api/v1/auth/register", json={**REGISTRATION, "email": "ASHA@Example.com"}
+    ).json()
+    assert body["email"] == "asha@example.com"
+
+
+def test_capitalisation_cannot_create_a_duplicate_account(client):
+    """Otherwise Asha@ and asha@ become two accounts for one person, and which
+    one they reach depends on how their keyboard felt that morning."""
+    client.post("/api/v1/auth/register", json=REGISTRATION)
+
+    duplicate = client.post(
+        "/api/v1/auth/register", json={**REGISTRATION, "email": "ASHA@EXAMPLE.COM"}
+    )
+    assert duplicate.status_code == 409

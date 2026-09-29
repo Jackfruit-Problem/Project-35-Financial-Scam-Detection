@@ -23,6 +23,19 @@ export default function Login() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
+  async function signInAs(demoEmail: string) {
+    setError("");
+    setBusy(true);
+    try {
+      await login(demoEmail, "password123");
+      navigate("/");
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setError("");
@@ -113,31 +126,28 @@ export default function Login() {
       <div className="card">
         <h2>Demo accounts</h2>
         <p className="demo-accounts" style={{ marginTop: 0 }}>
-          Click one to fill the form. Password for all:{" "}
-          <code>password123</code>
+          One click signs you in. Every one of them uses the password{" "}
+          <code>password123</code>.
         </p>
-        <table>
-          <tbody>
-            {DEMO.map(([demoEmail, role]) => (
-              <tr key={demoEmail}>
-                <td style={{ padding: "6px 0" }}>{role}</td>
-                <td style={{ padding: "6px 0", textAlign: "right" }}>
-                  <code
-                    className="demo-accounts"
-                    style={{ cursor: "pointer", color: "var(--accent)" }}
-                    onClick={() => {
-                      setMode("login");
-                      setEmail(demoEmail);
-                      setPassword("password123");
-                    }}
-                  >
-                    use
-                  </code>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {DEMO.map(([demoEmail, role]) => (
+          <button
+            key={demoEmail}
+            className="secondary"
+            disabled={busy}
+            style={{
+              width: "100%",
+              textAlign: "left",
+              marginBottom: 6,
+              fontWeight: 500,
+            }}
+            onClick={() => signInAs(demoEmail)}
+          >
+            <b>{role}</b>
+            <span className="hint" style={{ marginLeft: 8 }}>
+              {demoEmail}
+            </span>
+          </button>
+        ))}
       </div>
     </div>
   );
