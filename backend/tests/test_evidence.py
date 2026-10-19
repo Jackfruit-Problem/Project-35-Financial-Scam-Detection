@@ -64,7 +64,9 @@ def test_upload_is_encrypted_at_rest(client, make_user, auth_headers, db_session
             content_type="text/plain")
 
     stored = db_session.query(Evidence).one()
-    on_disk = open(stored.stored_path, "rb").read()
+    # The database records a path relative to the evidence root, so reading it
+    # goes through resolve() rather than assuming the process's cwd.
+    on_disk = storage.resolve(stored.stored_path).read_bytes()
 
     assert secret not in on_disk
     # ...but it still decrypts back to exactly what was submitted.

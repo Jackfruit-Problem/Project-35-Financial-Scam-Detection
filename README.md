@@ -46,6 +46,7 @@ This project is a web-based platform that:
 ├── tools/          # Helper scripts used by the launchers
 ├── Run FSDIRAS.bat # Double-click to start the whole system
 ├── Stop FSDIRAS.bat
+├── Create Desktop Shortcut.bat
 ├── RUNNING.md      # How to install, seed, run and test the system
 └── README.md
 ```

@@ -16,7 +16,7 @@ from app.db.session import get_db
 from app.main import app
 from app.models.enums import Role
 from app.models.user import User
-from app.services import ml_client
+from app.services import ml_client, throttle
 
 # Captured before anything patches it, so tests of the client itself can put
 # the real implementation back. Without this, the autouse fixture below
@@ -29,6 +29,15 @@ def real_ml_client(monkeypatch):
     """Restore the genuine client, for tests that exercise its own defences."""
     monkeypatch.setattr(ml_client, "predict", _REAL_ML_PREDICT)
     return ml_client
+
+
+@pytest.fixture(autouse=True)
+def clear_login_throttle():
+    """Login throttling is process-wide state. Without clearing it, one test's
+    deliberate failures would lock out the next test using the same address."""
+    throttle.reset()
+    yield
+    throttle.reset()
 
 
 @pytest.fixture(autouse=True)

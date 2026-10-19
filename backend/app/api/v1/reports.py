@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_roles
+from app.api.pagination import Page, page_params
 from app.db.session import get_db
 from app.models.enums import CaseStatus, RiskBand, Role
 from app.models.report import Case, ScamReport
@@ -104,7 +105,9 @@ def submit_report(
 
 @router.get("/reports/mine", response_model=list[ReportOut])
 def my_reports(
-    db: Session = Depends(get_db), user: User = Depends(get_current_user)
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+    page: Page = Depends(page_params),
 ) -> list[ScamReport]:
     """A victim tracks their own submissions and nothing else (SRS 6.5: PII)."""
     return list(
@@ -112,6 +115,8 @@ def my_reports(
             select(ScamReport)
             .where(ScamReport.reporter_id == user.id)
             .order_by(ScamReport.id.desc())
+            .limit(page.limit)
+            .offset(page.offset)
         ).all()
     )
 
@@ -142,5 +147,14 @@ def get_report(
     response_model=list[ReportOut],
     dependencies=[Depends(require_roles(Role.INVESTIGATOR, Role.RECOVERY_OFFICER, Role.ADMIN))],
 )
-def list_reports(db: Session = Depends(get_db)) -> list[ScamReport]:
-    return list(db.scalars(select(ScamReport).order_by(ScamReport.id.desc())).all())
+def list_reports(
+    db: Session = Depends(get_db), page: Page = Depends(page_params)
+) -> list[ScamReport]:
+    return list(
+        db.scalars(
+            select(ScamReport)
+            .order_by(ScamReport.id.desc())
+            .limit(page.limit)
+            .offset(page.offset)
+        ).all()
+    )

@@ -9,7 +9,7 @@ from app.db.session import get_db
 from app.models.enums import Role
 from app.models.user import User
 from app.schemas import LoginRequest, Token, UserCreate, UserOut
-from app.services import audit
+from app.services import audit, throttle
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -58,13 +58,33 @@ def register(payload: UserCreate, db: Session = Depends(get_db)) -> User:
 
 @router.post("/login", response_model=Token)
 def login(payload: LoginRequest, db: Session = Depends(get_db)) -> Token:
-    user = db.scalars(
-        select(User).where(User.email == normalise_email(payload.email))
-    ).first()
+    email = normalise_email(payload.email)
+
+    # SRS 6.3 requires logins to be audited, which reveals an attack after the
+    # fact. This stops one while it is running.
+    wait = throttle.seconds_until_retry(email)
+    if wait:
+        audit.record(
+            db, actor_id=None, action="user.login_throttled", detail=f"email:{email}"
+        )
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Too many failed attempts. Try again in {wait} seconds.",
+            headers={"Retry-After": str(wait)},
+        )
+
+    user = db.scalars(select(User).where(User.email == email)).first()
 
     # Same message and code for "no such user" and "wrong password" so the
     # endpoint cannot be used to enumerate which emails are registered.
     if user is None or not verify_password(payload.password, user.hashed_password):
+        throttle.record_failure(email)
+        audit.record(
+            db, actor_id=user.id if user else None,
+            action="user.login_failed", detail=f"email:{email}",
+        )
+        db.commit()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password"
         )
@@ -73,6 +93,9 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> Token:
             status_code=status.HTTP_403_FORBIDDEN, detail="Account is deactivated"
         )
 
+    # Clearing on success means an honest user who mistypes a few times and
+    # then gets it right is never locked out.
+    throttle.record_success(email)
     audit.record(db, actor_id=user.id, action="user.login", target=f"user:{user.id}")
     db.commit()
 

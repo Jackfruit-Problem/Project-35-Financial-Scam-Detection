@@ -34,8 +34,25 @@ ALLOWED_CONTENT_TYPES = {
 _NONCE_BYTES = 12
 
 
+# Anchor for a relative EVIDENCE_DIR. Resolving it against the working
+# directory instead -- which is what Path("./evidence_store") does -- means
+# evidence is reachable only when the server happens to have been started from
+# the backend folder, and silently unreachable otherwise. This file is at
+# backend/app/services/storage.py, so two levels up is backend/.
+BACKEND_ROOT = Path(__file__).resolve().parents[2]
+
+
 class UploadRejected(Exception):
     """Raised when a file must not be stored. Carries a user-facing reason."""
+
+
+class EvidenceMissing(Exception):
+    """The custody record exists but the file behind it does not.
+
+    Worth its own type rather than letting FileNotFoundError escape as a 500:
+    for evidence specifically this is a serious, nameable condition, and the
+    caller needs to say so plainly instead of showing a stack trace.
+    """
 
 
 def _key() -> bytes:
@@ -48,9 +65,41 @@ def sha256_of(payload: bytes) -> str:
 
 
 def evidence_root() -> Path:
-    root = Path(settings.EVIDENCE_DIR)
+    """Where evidence lives, as an absolute path regardless of the cwd."""
+    configured = Path(settings.EVIDENCE_DIR)
+    root = configured if configured.is_absolute() else BACKEND_ROOT / configured
     root.mkdir(parents=True, exist_ok=True)
-    return root
+    return root.resolve()
+
+
+def resolve(stored_path: str) -> Path:
+    """Turn a stored path into a real one, tolerating the older formats.
+
+    Three cases, in order:
+
+    * absolute -- used as given, for a deployment with storage elsewhere;
+    * relative to the evidence root -- what is written now;
+    * relative to the backend folder -- what earlier versions wrote, including
+      the "evidence_store/" prefix. Those rows predate this function and must
+      keep working, because evidence is the one thing in this system that can
+      never be regenerated.
+
+    A path that matches none of them is returned under the evidence root, so
+    the error message points at where the file was expected.
+    """
+    candidate = Path(stored_path)
+    if candidate.is_absolute():
+        return candidate
+
+    under_root = evidence_root() / candidate
+    if under_root.exists():
+        return under_root
+
+    legacy = BACKEND_ROOT / candidate
+    if legacy.exists():
+        return legacy
+
+    return under_root
 
 
 def scan(payload: bytes) -> None:
@@ -97,11 +146,19 @@ def store(payload: bytes, *, case_ref: str, filename: str) -> tuple[str, str]:
     target = case_dir / f"{digest}.enc"
     target.write_bytes(nonce + ciphertext)
 
-    return str(target), digest
+    # Recorded relative to the evidence root, not as an absolute path. An
+    # absolute path pins the database to one machine and one folder; moving
+    # either would orphan every file. A root-relative path survives both.
+    return str(Path(case_ref) / f"{digest}.enc"), digest
 
 
 def load(stored_path: str) -> bytes:
     """Decrypt a stored file. Raises if the ciphertext was tampered with."""
-    blob = Path(stored_path).read_bytes()
+    path = resolve(stored_path)
+    try:
+        blob = path.read_bytes()
+    except FileNotFoundError as exc:
+        raise EvidenceMissing(str(path)) from exc
+
     nonce, ciphertext = blob[:_NONCE_BYTES], blob[_NONCE_BYTES:]
     return AESGCM(_key()).decrypt(nonce, ciphertext, None)

@@ -4,6 +4,7 @@ Every read and write of an evidence item appends to its custody chain, so the
 chain records who touched what and when -- including mere viewing, which is
 what makes it a chain of custody rather than an upload log.
 """
+from cryptography.exceptions import InvalidTag
 from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -136,7 +137,21 @@ def download_evidence(
     case = db.get(Case, evidence.case_id)
     _assert_can_access(case, user)
 
-    payload = storage.load(evidence.stored_path)
+    try:
+        payload = storage.load(evidence.stored_path)
+    except storage.EvidenceMissing as exc:
+        # 410, not 404: the evidence record exists and the custody chain still
+        # proves it was submitted. What is gone is the file, and saying that
+        # plainly matters more here than anywhere else in the system -- it
+        # means someone must go looking for a backup.
+        raise HTTPException(
+            status_code=status.HTTP_410_GONE,
+            detail=(
+                "The evidence record exists but its file is missing from "
+                "storage. The custody record is intact; the file needs to be "
+                "restored from a backup."
+            ),
+        ) from exc
 
     custody.append_event(
         db,
@@ -194,7 +209,10 @@ def verify_evidence(
     # proves the file behind the log is still the one that was submitted.
     try:
         file_intact = storage.sha256_of(storage.load(evidence.stored_path)) == evidence.sha256
-    except Exception:
+    except (storage.EvidenceMissing, InvalidTag):
+        # Missing file, or ciphertext that fails its authentication tag. Both
+        # mean the file can no longer be trusted, which is exactly what
+        # file_intact=False reports. A bare except here would also hide a bug.
         file_intact = False
 
     return ChainVerification(

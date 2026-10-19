@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # Importing the model package registers every table on Base.metadata.
 from app import models  # noqa: F401
 from app.api.v1 import admin, auth, cases, education, evidence, recovery, reports
-from app.core.config import settings
+from app.core.config import enforce_production_safety, settings
 from app.db.base import Base
 from app.db.session import engine
 
@@ -17,6 +17,11 @@ async def lifespan(_: FastAPI):
     # Interim schema creation so `docker compose up` gives a working system on a
     # clean machine. Alembic migrations replace this before any real deployment
     # -- create_all cannot alter an existing table, so it is not a migration path.
+    # Refuses to start on an unsafe production configuration; warns in
+    # development. Before create_all, so a misconfigured deployment stops
+    # before it touches a database.
+    enforce_production_safety()
+
     Base.metadata.create_all(bind=engine)
     yield
 

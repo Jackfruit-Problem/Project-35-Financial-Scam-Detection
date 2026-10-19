@@ -14,6 +14,12 @@ echo.
 
 set "VENV_PY=backend\.venv\Scripts\python.exe"
 
+:: %~dp0 ends with a backslash. Passed as "%~dp0" to PowerShell, that
+:: backslash escapes the closing quote and the argument swallows whatever
+:: follows it -- which silently emptied the -Ports argument below.
+set "PROJECT_ROOT=%~dp0"
+set "PROJECT_ROOT=%PROJECT_ROOT:~0,-1%"
+
 if exist "%VENV_PY%" goto :haveenv
 
 :: ---------------------------------------------------------------- Python ---
@@ -94,6 +100,27 @@ echo   [5/6] Detection model found.
 
 :: --------------------------------------------------------------- Servers ---
 :servers
+:: Anything already holding these ports has to go first. Starting on top of a
+:: running copy looked like it worked -- the new servers failed to bind, the
+:: health check answered from the OLD one, and the launcher cheerfully reported
+:: success while your changes were nowhere to be seen.
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0tools\ports.ps1" -Ports 8000,8001,5173 >nul 2>&1
+if not errorlevel 1 (
+    echo   An earlier copy is still running. Stopping it first...
+    rem Not "call Stop FSDIRAS.bat": that matches every process started from
+    rem this folder, which includes this launcher and the console running it,
+    rem so it kills the launch it was asked to restart. free_ports.ps1 walks up
+    rem from itself and refuses to touch its own ancestry.
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0tools\free_ports.ps1" -Root "%PROJECT_ROOT%" -Ports 8000,8001,5173
+    if errorlevel 1 (
+        echo.
+        echo   Could not free the ports. Run "Stop FSDIRAS.bat" and try again.
+        echo.
+        pause
+        exit /b 1
+    )
+)
+
 echo   [6/6] Starting the system...
 
 start "FSDIRAS Model (do not close)" cmd /k "cd /d "%~dp0ml" && ..\backend\.venv\Scripts\python.exe -m uvicorn app.main:app --port 8001"

@@ -8,10 +8,14 @@ In this folder there are two files:
 |---|---|
 | **Run FSDIRAS.bat** | Starts everything and opens the app in your browser |
 | **Stop FSDIRAS.bat** | Shuts it all down again |
+| **Create Desktop Shortcut.bat** | Puts a *Start FSDIRAS* shortcut on your Desktop, so you never have to find this folder again. Run it once; run it again if you move the project. |
 
 Double-click **Run FSDIRAS.bat**. The first run installs what it needs and
 takes a few minutes; every run after that takes about ten seconds. When it is
 ready your browser opens at <http://localhost:5173>.
+
+Running it while a copy is already going is fine -- it stops the old one first
+and confirms the ports actually came free before starting again.
 
 It leaves three black console windows open -- the web interface, the
 application, and the detection model. Those are the servers: minimise them, do
@@ -141,6 +145,25 @@ touches your demo data.
 
 CI runs this too, so a failure here is a failure there.
 
+## Before deploying anywhere real
+
+Set two things in the environment, or the application will tell you why not:
+
+```
+FSDIRAS_ENV=production
+SECRET_KEY=<32+ random characters>
+DATABASE_URL=postgresql+psycopg://user:password@host/dbname
+```
+
+With `FSDIRAS_ENV=production` the app refuses to start if the signing key is
+still the development default, if the key is too short, or if the database is
+SQLite. In development it only warns, so nobody has to invent a secret just to
+run the project.
+
+That key matters more than it looks: it signs every login token *and* derives
+the encryption key for stored evidence. Shipping the default means anyone with
+a copy of this source can forge a login and decrypt the evidence store.
+
 ## Running on PostgreSQL with Docker
 
 Once Docker Desktop is installed:
@@ -195,7 +218,15 @@ Run `Stop FSDIRAS.bat`, which reports whether the ports actually came free.
 
 **Login returns 422 about the email** -- the address uses a reserved domain
 such as `.local` or `.test`. Use a normal domain; the demo accounts use
-`example.com`.
+`example.com`. Capitalisation does not matter.
+
+**Login returns 429** -- too many wrong passwords for that address. It clears
+itself after five minutes, or immediately on a correct sign-in for a different
+account. The limit is ten failures.
+
+**Evidence download returns 410** -- the database row is intact but the file is
+missing from `backend/evidence_store`. Restore it from a backup; the custody
+chain still proves what was submitted.
 
 **Tests pass locally but fail in CI** -- CI runs on PostgreSQL and local runs
 default to SQLite. Bring up Docker and set `DATABASE_URL` to the PostgreSQL

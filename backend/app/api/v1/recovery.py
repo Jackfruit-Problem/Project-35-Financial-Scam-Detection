@@ -142,14 +142,26 @@ def update_recovery(
     recovery = _load_recovery(db, case)
 
     if payload.amount_recovered is not None:
+        reported = float(recovery.amount_reported)
+
         # Recovering more than was lost is not a partial success, it is a data
         # entry error, and it would corrupt the recovery-rate analytics.
-        if payload.amount_recovered > float(recovery.amount_reported):
+        #
+        # The check only applies when a loss was actually quantified. Appendix B
+        # makes the amount optional, so a report can carry 0 meaning "not
+        # stated" rather than "nothing was lost" -- and comparing against that
+        # made it impossible to ever record money coming back on those cases.
+        # The officer records the recovered figure, and it becomes the reported
+        # figure too, since that is now the only number anyone has.
+        if reported > 0 and payload.amount_recovered > reported:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Amount recovered cannot exceed the amount reported lost",
             )
+
         recovery.amount_recovered = payload.amount_recovered
+        if reported == 0 and payload.amount_recovered > 0:
+            recovery.amount_reported = payload.amount_recovered
 
     previous = recovery.status
     recovery.status = payload.status

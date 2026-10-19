@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, require_roles
+from app.api.pagination import Page, page_params
 from app.db.session import get_db
 from app.models.enums import CaseStatus, Role
 from app.models.report import Case, CaseNote
@@ -46,13 +47,15 @@ def _assert_can_view(case: Case, user: User) -> None:
 
 @router.get("", response_model=list[CaseOut], dependencies=[Depends(require_roles(*_STAFF))])
 def list_cases(
-    db: Session = Depends(get_db), user: User = Depends(get_current_user)
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+    page: Page = Depends(page_params),
 ) -> list[Case]:
     """Investigators see their own queue; recovery officers and admins see all."""
     query = select(Case).order_by(Case.id.desc())
     if user.role == Role.INVESTIGATOR:
         query = query.where(Case.assigned_investigator_id == user.id)
-    return list(db.scalars(query).all())
+    return list(db.scalars(query.limit(page.limit).offset(page.offset)).all())
 
 
 @router.get("/{case_ref}", response_model=CaseDetail)
@@ -91,6 +94,15 @@ def assign_case(
     if investigator is None or investigator.role != Role.INVESTIGATOR:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Not an investigator"
+        )
+    # Automatic allocation already skips deactivated investigators. Manual
+    # assignment did not, so an administrator could hand a case to someone who
+    # cannot sign in -- and the case would sit in Under Investigation with
+    # nobody able to touch it, looking assigned and quietly going nowhere.
+    if not investigator.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="That investigator's account is deactivated",
         )
 
     case.assigned_investigator_id = investigator.id

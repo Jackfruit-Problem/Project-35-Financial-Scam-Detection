@@ -10,7 +10,11 @@ echo.
 :: survive cmd's parsing -- caret continuations and redirection operators get
 :: interpreted inside what should be one PowerShell string, and the script
 :: silently stops halfway through.
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0tools\stop.ps1" -Root "%~dp0"
+set "PROJECT_ROOT=%~dp0"
+set "PROJECT_ROOT=%PROJECT_ROOT:~0,-1%"
+:: Stripped of its trailing backslash: a quoted argument ending in one
+:: escapes its own closing quote and absorbs anything after it.
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0tools\stop.ps1" -Root "%PROJECT_ROOT%"
 
 echo.
 echo   You can close this window.
