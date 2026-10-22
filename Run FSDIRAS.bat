@@ -143,13 +143,27 @@ goto :timedout
 
 :ready
 ping -n 4 127.0.0.1 >nul
+:: The model service loads scikit-learn and the trained model, so it is ready
+:: several seconds after the API. Checking once and reporting it down was
+:: simply wrong most of the time -- it was still starting.
+set /a MLTRIES=0
+
+:mlwait
+set /a MLTRIES+=1
 curl -s -o nul -m 3 http://127.0.0.1:8001/health 2>nul
-if errorlevel 1 (
-    echo   Note: the detection model is not answering yet. Risk scoring will
-    echo   use the built-in rules until it is up. Nothing else is affected.
-) else (
-    echo   Detection model is up.
+if not errorlevel 1 goto :mlup
+if !MLTRIES! lss 10 (
+    ping -n 3 127.0.0.1 >nul
+    goto :mlwait
 )
+echo   Note: the detection model is not answering. Risk scoring will use the
+echo   built-in rules until it is up. Nothing else is affected.
+goto :mldone
+
+:mlup
+echo   Detection model is up.
+
+:mldone
 start "" http://localhost:5173
 
 echo.
