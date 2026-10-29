@@ -42,7 +42,7 @@ This project is a web-based platform that:
 │   └── scripts/    #   seed_demo.py
 ├── ml/             # Risk-scoring model service, training and evaluation
 ├── frontend/       # React application
-├── docs/           # Project plan, test plan, design diagrams
+├── docs/           # Project plan, test plan, diagrams, sprint retrospectives
 ├── tools/          # Helper scripts used by the launchers
 ├── Run FSDIRAS.bat # Double-click to start the whole system
 ├── Stop FSDIRAS.bat
@@ -61,6 +61,7 @@ See **[RUNNING.md](RUNNING.md)** for setup and run instructions.
 | Project Plan | 🔲 Pending | `docs/` |
 | Test Plan | 🔲 Pending | `docs/` |
 | Design Diagrams | 🔲 Pending | `docs/` |
+| Sprint Retrospective (facilitator template) | ✅ Complete | [`docs/sprint-retrospective.md`](docs/sprint-retrospective.md) |
 
 ## System Modules
 
