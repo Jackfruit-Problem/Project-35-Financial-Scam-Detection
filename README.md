@@ -59,8 +59,9 @@ See **[RUNNING.md](RUNNING.md)** for setup and run instructions.
 |---|---|---|
 | Software Requirements Specification (v1.0) | ✅ Complete | [`SRS_ProjectID35_FSDIRAS.pdf`](SRS_ProjectID35_FSDIRAS.pdf) (preview) · [`.docx`](SRS_ProjectID35_FSDIRAS.docx) (editable) |
 | Project Plan | 🔲 Pending | `docs/` |
-| Test Plan | 🔲 Pending | `docs/` |
-| Design Diagrams | 🔲 Pending | `docs/` |
+| Test Plan | ✅ Complete | [`docs/test-plan.md`](docs/test-plan.md) |
+| Test Cases (15, prioritised, with results) | ✅ Complete | `FSDIRAS - Test Cases.pdf` |
+| Design Diagrams (use-case, ER, sequence, deployment) | ✅ Complete | [`docs/design-diagrams.md`](docs/design-diagrams.md) |
 | Sprint Retrospective (facilitator template) | ✅ Complete | [`docs/sprint-retrospective.md`](docs/sprint-retrospective.md) |
 
 ## System Modules
