@@ -145,6 +145,33 @@ touches your demo data.
 
 CI runs this too, so a failure here is a failure there.
 
+## Database schema and migrations
+
+The schema is managed by Alembic. You do not normally have to do anything: the
+application runs `alembic upgrade head` as it starts, so launching it on a clean
+machine creates the tables, and launching it after a schema change applies that
+change.
+
+Two commands matter when you edit a model:
+
+```
+cd backend
+.venv\Scripts\python.exe -m alembic revision --autogenerate -m "what changed"
+.venv\Scripts\python.exe -m alembic upgrade head
+```
+
+Read the generated file in `backend/alembic/versions/` before committing it.
+Autogenerate is good at added and removed tables and columns; it cannot guess a
+rename, which it sees as a drop plus an add -- and that silently throws away the
+column's data.
+
+`tests/test_migrations.py` fails if the models and the migrations drift apart, so
+forgetting to generate a revision is caught by the suite rather than in a deploy.
+
+Why not `Base.metadata.create_all`, which this project used until 17 November?
+Because it can only create tables that do not exist. It cannot alter one, so the
+moment a model changed, the database quietly stayed as it was.
+
 ## Before deploying anywhere real
 
 Set two things in the environment, or the application will tell you why not:

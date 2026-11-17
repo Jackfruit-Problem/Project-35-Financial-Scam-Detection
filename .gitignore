@@ -46,3 +46,6 @@ ml/data/raw/
 # so it is rebuilt rather than committed. The synthetic half IS committed,
 # because it is ours and the model cannot be reproduced without it.
 ml/data/train.csv
+
+# TypeScript incremental build cache, written by `npm run build`
+*.tsbuildinfo

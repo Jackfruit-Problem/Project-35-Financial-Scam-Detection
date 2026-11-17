@@ -10,6 +10,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app import main
 from app.core.security import hash_password
 from app.db.base import Base
 from app.db.session import get_db
@@ -29,6 +30,18 @@ def real_ml_client(monkeypatch):
     """Restore the genuine client, for tests that exercise its own defences."""
     monkeypatch.setattr(ml_client, "predict", _REAL_ML_PREDICT)
     return ml_client
+
+
+@pytest.fixture(autouse=True)
+def no_startup_migrations(monkeypatch):
+    """Stop the app's lifespan migrating anything during tests.
+
+    Each test builds its own in-memory schema from the models (see db_session).
+    Without this the TestClient's start-up would run Alembic against
+    settings.DATABASE_URL -- the developer's real fsdiras.db -- which is both
+    wrong and slow, and leaves a half-migrated file behind when it fails.
+    """
+    monkeypatch.setattr(main, "run_migrations", lambda: None)
 
 
 @pytest.fixture(autouse=True)
