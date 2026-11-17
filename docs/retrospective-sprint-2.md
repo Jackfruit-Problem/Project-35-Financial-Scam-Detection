@@ -88,8 +88,8 @@ watches on purpose once, and confirm the check goes red.
 
 | # | Action | Owner | Due | Status |
 |---|---|---|---|---|
-| 1 | Replace the interim `create_all` with Alembic migrations before any deployment | Meha Mahajan | Sprint 3 | Open |
-| 2 | Deploy to a public URL so the demo does not depend on a local machine | Zaid Mallik | Sprint 3 | Open |
+| 1 | Replace the interim `create_all` with Alembic migrations before any deployment | Meha Mahajan | Sprint 3 | Done 17 Nov — 3 tests assert migrations match the models |
+| 2 | Deploy to a public URL so the demo does not depend on a local machine | Zaid Mallik | Sprint 3 | Blueprint and guide committed; needs a hosting account |
 | 3 | Prove each new test can fail before accepting it | Whole team | Ongoing | Carried to Sprint 3 |
 | 4 | Write the graded documents during the sprint, not on its last day | Mohammed Muaz Iqubal | Sprint 3 | In progress — UML diagrams, project plan and test report done 17 Nov |
 

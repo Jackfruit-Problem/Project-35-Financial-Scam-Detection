@@ -108,9 +108,10 @@ person per week.
 ## 8. Configuration management
 
 `main` is the integrated branch and is always runnable. Work happens on feature
-branches merged by pull request. The interim `create_all` schema bootstrap must be
-replaced by Alembic migrations before any deployment — this is a known, recorded
-debt, not an oversight.
+branches merged by pull request. The schema is managed by Alembic migrations,
+applied automatically when the application starts, so a schema change ships with
+the deploy that needs it. The interim `create_all` bootstrap it replaced could
+only create missing tables and never alter an existing one.
 
 ## 9. Quality plan
 
@@ -123,5 +124,8 @@ test in `backend/tests/test_regressions.py`.
 
 ## 10. Pending work
 
-1. Alembic migrations to replace `create_all` — Sprint 2 action item 1, open.
-2. Deployment to a public URL — Sprint 2 action item 2, open.
+1. ~~Alembic migrations to replace `create_all`~~ — done 17 Nov, with tests
+   asserting the migrations build exactly the schema the models declare.
+2. Deployment to a public URL — `render.yaml` and `docs/deployment.md` are
+   committed; the remaining step is connecting the repository to a hosting
+   account, which only an account owner can do.

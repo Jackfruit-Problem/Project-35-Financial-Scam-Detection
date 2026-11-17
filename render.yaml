@@ -1,0 +1,75 @@
+# Render blueprint for FSDIRAS.
+#
+# Four services: PostgreSQL, the model service, the API, and the built SPA.
+#
+# The SPA calls /api/v1/... relatively, so instead of rebuilding it with an
+# absolute API URL we give the static site a rewrite: /api/* is served from the
+# API host. Same origin from the browser's point of view, so there is no CORS
+# configuration to get wrong and no secret baked into the bundle.
+#
+# Deploy: push this file, then Render dashboard -> New -> Blueprint -> pick the
+# repo. Full walkthrough in docs/deployment.md.
+
+databases:
+  - name: fsdiras-db
+    databaseName: fsdiras
+    user: fsdiras
+    plan: free
+
+services:
+  # ---------------------------------------------------------------- model
+  - type: web
+    name: fsdiras-ml
+    runtime: docker
+    plan: free
+    rootDir: ml
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+
+  # ---------------------------------------------------------------- api
+  - type: web
+    name: fsdiras-api
+    runtime: docker
+    plan: free
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      # psycopg v3 driver; Render hands out a postgres:// URL, and the
+      # +psycopg form is what SQLAlchemy 2.x needs to pick the right dialect.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fsdiras-db
+          property: connectionString
+      # Generated once by Render and never stored in the repository. The app
+      # refuses to boot in production on the development key or on anything
+      # shorter than 32 characters.
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FSDIRAS_ENV
+        value: production
+      - key: ML_SERVICE_URL
+        fromService:
+          type: web
+          name: fsdiras-ml
+          property: hostport
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+  # ---------------------------------------------------------------- spa
+  - type: web
+    name: fsdiras-web
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    routes:
+      # Order matters: the API rewrite must come before the SPA catch-all, or
+      # every API call would be answered with index.html.
+      - type: rewrite
+        source: /api/*
+        destination: https://fsdiras-api.onrender.com/api/*
+      # Client-side routing: anything that is not a real file returns the app.
+      - type: rewrite
+        source: /*
+        destination: /index.html
