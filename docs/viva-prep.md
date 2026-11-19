@@ -302,7 +302,7 @@ Have these numbers ready. Precision is what makes an examiner believe you built 
 | Your module | **Recovery & Reporting Assistance, REQ-15 to REQ-19** |
 | Architecture | Layered client–server; ML isolated as its own service |
 | Stack | FastAPI + React/TypeScript + PostgreSQL (SQLite fallback), scikit-learn |
-| Scale | 15 tables, 33 API endpoints, 8 screens |
+| Scale | 15 tables, 40 API endpoints, 9 screens |
 | Tests | 167 automated (130 backend + 37 ML), all passing |
 | Model | TF-IDF (word 1-2, char 3-5) → logistic regression |
 | Model quality | precision 0.950, recall 0.993, AUC 0.9994; threshold **0.17** |

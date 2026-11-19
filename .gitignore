@@ -49,3 +49,8 @@ ml/data/train.csv
 
 # TypeScript incremental build cache, written by `npm run build`
 *.tsbuildinfo
+
+# Coverage artefacts from the quality report run.
+.coverage
+htmlcov/
+coverage.json

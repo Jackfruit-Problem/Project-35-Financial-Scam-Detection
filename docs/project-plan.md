@@ -70,9 +70,9 @@ and should be replaced if the team keeps its own figures.
 
 | Area | Evidence of size | Est. person-hours |
 |---|---|---|
-| Backend | 15 tables, 33 API endpoints, 4 modules | 60 |
+| Backend | 15 tables, 40 API endpoints, 4 modules | 60 |
 | Detection model | TF-IDF + logistic regression, 2 data sources, measured P 0.950 / R 0.993 / AUC 0.9994 | 25 |
-| Front end | React + TypeScript + Vite, 8 screens | 35 |
+| Front end | React + TypeScript + Vite, 9 screens | 35 |
 | Tests | 167 automated tests across backend and ML | 30 |
 | Audit and defect fixing | 7 defects found and fixed, each with a regression test | 12 |
 | Tooling and launchers | double-click run/stop, CI workflow | 8 |
