@@ -9,8 +9,8 @@ The artefacts live in two places, and the distinction matters:
 
 | Location | What it holds |
 |---|---|
-| `04 Course Project - FSDIRAS (SE)/docs/` | The documents **submitted to the course** on their deadlines — Word and PDF, frozen as submitted |
-| `04 Course Project - FSDIRAS (SE)/jackfruit/docs/` | The repository's **living documents** — Markdown under version control, regenerated from the code, each with a PDF beside it |
+| `../docs/` (and `../docs/swe/`) | The documents **submitted to the course** on their deadlines — Word and PDF, frozen as submitted |
+| `docs/` in the repository | The repository's **living documents** — Markdown under version control, regenerated from the code, each with a PDF beside it |
 
 Where both exist, the submitted copy is the record of what was handed in and the
 repository copy is the current truth about the system.
@@ -21,15 +21,15 @@ repository copy is the current truth about the system.
 
 | ID | Deliverable | Artefact | Date | State |
 |---|---|---|---|---|
-| D-1 | SRS v1.0 | `jackfruit/SRS_ProjectID35_FSDIRAS.docx` / `.pdf` | 6 Sep 2026 | Submitted. 25 functional requirements, REQ-1 to REQ-25 |
-| D-1 | Jira backlog started | `docs/jira_backlog.docx` / `.pdf` | 27 Sep 2026 | Submitted |
-| D-2 | Test Plan | `docs/35_Project Test Plan.docx` / `.pdf` (submitted) · `jackfruit/docs/test-plan.md` (living) | 27 Sep 2026 | Both current |
-| D-3 | Software Architecture document | `docs/SweArchitecture.docx` / `.pdf` (submitted) · `jackfruit/docs/architecture.md` (living, **new 19 Nov**) | 27 Sep 2026 · 19 Nov 2026 | The repository version is written against the code as built and adds 13 architecture decision records |
-| D-4 | Software Design document + design diagrams | `jackfruit/docs/design-diagrams.md` | 29 Oct 2026 | ER sections generated from the live models, so they cannot drift |
-| D-5 | Sprint 1 complete + retrospective | `jackfruit/docs/retrospective-sprint-1.md` | — | Held and recorded |
-| D-6 | Sprint 2 complete + retrospective | `jackfruit/docs/retrospective-sprint-2.md` | — | Held and recorded |
-| D-7 | UML design diagrams | `jackfruit/docs/uml/` — six PNGs + one PDF | 17 Nov 2026 | Proper UML notation, not flowcharts |
-| Final | All test reports | `jackfruit/docs/test-report.md` · `docs/FSDIRAS - Test Cases.pdf` | 19 Nov 2026 | **171 tests, 0 failures** |
+| D-1 | SRS v1.0 | `SRS_ProjectID35_FSDIRAS.docx` / `.pdf` (repository root) | 6 Sep 2026 | Submitted. 25 functional requirements, REQ-1 to REQ-25 |
+| D-1 | Jira backlog started | `../docs/jira_backlog.docx`, `../docs/swe/jira_backlog.pdf` | 27 Sep 2026 | Submitted |
+| D-2 | Test Plan | `../docs/35_Project Test Plan.docx`, `../docs/swe/35_Project Test Plan.pdf` (submitted) · `docs/test-plan.md` (living) | 27 Sep 2026 | Both current |
+| D-3 | Software Architecture document | `../docs/SweArchitecture.docx`, `../docs/swe/SweArchitecture.pdf` (submitted) · `docs/architecture.md` (living, **new 19 Nov**) | 27 Sep 2026 · 19 Nov 2026 | The repository version is written against the code as built and adds 13 architecture decision records |
+| D-4 | Software Design document + design diagrams | `docs/design-diagrams.md` | 29 Oct 2026 | ER sections generated from the live models, so they cannot drift |
+| D-5 | Sprint 1 complete + retrospective | `docs/retrospective-sprint-1.md` | — | Held and recorded |
+| D-6 | Sprint 2 complete + retrospective | `docs/retrospective-sprint-2.md` | — | Held and recorded |
+| D-7 | UML design diagrams | `docs/uml/` — six PNGs + one PDF | 17 Nov 2026 | Proper UML notation, not flowcharts |
+| Final | All test reports | `docs/test-report.md` · `../docs/FSDIRAS - Test Cases.pdf` | 19 Nov 2026 | **171 tests, 0 failures** |
 
 ---
 
@@ -64,7 +64,7 @@ repository copy is the current truth about the system.
 | Sprint 1 retrospective | `docs/retrospective-sprint-1.md` | Includes the REQ-5 / REQ-8 contradiction and how it was resolved |
 | Sprint 2 retrospective | `docs/retrospective-sprint-2.md` | Includes the seven defects found by auditing the finished system |
 | Retrospective facilitator template | `docs/sprint-retrospective.md` | Reusable checklist, prime directive, ROTI |
-| Jira backlog | `../docs/jira_backlog.docx` | Outside the repository, in the course-project folder |
+| Jira backlog | `../docs/jira_backlog.docx` | Outside the repository, in the course-project folder; PDF in `../docs/swe/` |
 
 ### 2.4 Verification
 
@@ -92,7 +92,7 @@ repository copy is the current truth about the system.
 
 ## 3. PDF set
 
-Every living document has a PDF beside it, in `jackfruit/docs/`:
+Every living document has a PDF beside it, in the repository's `docs/`:
 
 | PDF |
 |---|
